@@ -59,12 +59,11 @@ if __name__ == '__main__':
 
     cerebro = bt.Cerebro()
     cerebro.broker.setcash(inital_cash)
-    cerebro.addsizer(bt.sizers.FixedSize, stake=1000)
+    cerebro.addsizer(bt.sizers.FixedSize, stake=10000)
     cerebro.addstrategy(ManmStrategy)
     # Add Analyzer
     cerebro.addanalyzer(bt.analyzers.Returns, _name='returns')
     cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
-
     # Feed Data
     tohlcva = ts.get_k_data(code.split('.')[0],
                             start=str(begt.date()),
@@ -75,11 +74,21 @@ if __name__ == '__main__':
     tohlcva.set_index('date', inplace=True)
     tohlcva = tohlcva[['open', 'high', 'low', 'close', 'volume']]
     tohlcva['openinterest'] = 0.0
-    data = bt.feeds.PandasData(dataname=tohlcva, fromdate=begt, todate=endt)
-    cerebro.adddata(data)
-
+    data = bt.feeds.PandasData(dataname=tohlcva, fromdate=begt, todate=endt)   # not plot
+    # data = bt.feeds.PandasData(dataname=tohlcva, fromdate=begt, todate=endt, plot=False)   # not plot
+    cerebro.adddata(data, name=code)
+    # set benchmark
+    cerebro.addobserver(bt.observers.Benchmark,
+                        data=data,
+                        timeframe=bt.TimeFrame.NoTimeFrame)
+    # cerebro.addobserver(bt.observers.TimeReturn, timeframe=bt.TimeFrame.NoTimeFrame)
+    # cerebro.addanalyzer(bt.analyzers.TimeReturn,
+    #                     timeframe=bt.TimeFrame.NoTimeFrame,
+    #                     data=data,
+    #                     _name='timereturns')
     res = cerebro.run()
     print('params: ', res[0].params.n, res[0].params.m)
     print('returns: ', res[0].analyzers.returns.get_analysis())
     print('drawdown: ', res[0].analyzers.drawdown.get_analysis())
+    # print('timereturn: ', res[0].analyzers.timereturns.get_analysis())
     cerebro.plot()

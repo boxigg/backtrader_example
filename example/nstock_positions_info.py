@@ -39,7 +39,7 @@ class ManmStrategy(bt.Strategy):
     def __init__(self):
         super(ManmStrategy, self).__init__()
         self.positions_info = open('../result/nstock_positions_info_res.csv', 'w')
-        # self.positions_info.write('date, bt_id, sec_code, size, last price\n')
+        self.positions_info.write('date, code, size, price\n')
         self.man = []
         self.mam = []
         for each, eachdata in enumerate(self.datas):

@@ -43,7 +43,7 @@ class ManmStrategy(bt.Strategy):
         self.mam = []
         for each, eachdata in enumerate(self.datas):
             man = bt.indicators.MovingAverageSimple(eachdata.close, period=self.params.n)
-            mam = bt.indicators.MovingAverageSimple(eachdata.close, period=self.params.m)
+            mam = bt.indicators.MovingAverageSimple(eachdata.close, period=self.params.m)  # plot=False(ctrl plot or not)
             self.man.append(man)
             self.mam.append(mam)
 
@@ -59,14 +59,16 @@ class ManmStrategy(bt.Strategy):
 
         for each, eachdata in enumerate(self.datas):
             code = eachdata._name
+            if code == benchmark:
+                continue
             pos = self.getposition(eachdata)
             # print(code, pos)
             if not pos.size:  # no market / no orders
                 if self.man[each][0] > self.mam[each][0]:
-                    self.buy(data=eachdata, size=1000)
+                    self.buy(data=eachdata, size=5000)
             else:
                 if self.man[each][0] < self.mam[each][0]:
-                    self.sell(data=eachdata, size=1000)
+                    self.sell(data=eachdata, size=5000)
 
     def stop(self):
         pass
@@ -74,6 +76,7 @@ class ManmStrategy(bt.Strategy):
 
 if __name__ == '__main__':
     codes = ['000001.SZ', '603999.SH', '600000.SH']  # or set() -> list()
+    benchmark = '000300.SH'
     inital_cash = 1e5
     begt = dt.datetime(2016, 1, 1)
     endt = dt.datetime(2018, 1, 1)
@@ -97,8 +100,27 @@ if __name__ == '__main__':
         tohlcva = tohlcva[['open', 'high', 'low', 'close', 'volume']]
         tohlcva['openinterest'] = 0.0
         # print(tohlcva.head(10))
-        data = bt.feeds.PandasData(dataname=tohlcva, fromdate=begt, todate=endt)
+        data = bt.feeds.PandasData(dataname=tohlcva, fromdate=begt, todate=endt, plot=False)
         cerebro.adddata(data, name=code)
-
+    # set benchmark
+    tohlcva = ts.get_k_data(benchmark.split('.')[0],
+                            start=str(begt.date()),
+                            end=str(endt.date()),
+                            index=True)
+    tohlcva.drop('code', axis=1, inplace=True)
+    tohlcva['date'] = pd.to_datetime(tohlcva['date'])
+    tohlcva.set_index('date', inplace=True)
+    tohlcva = tohlcva[['open', 'high', 'low', 'close', 'volume']]
+    tohlcva['openinterest'] = 0.0
+    data = bt.feeds.PandasData(dataname=tohlcva, fromdate=begt, todate=endt, plot=False)  # not plot benchmark
+    cerebro.adddata(data, name=benchmark)
+    cerebro.addobserver(bt.observers.Benchmark,
+                        data=data,
+                        timeframe=bt.TimeFrame.NoTimeFrame)
+    # cerebro.addobserver(bt.observers.TimeReturn, timeframe=bt.TimeFrame.NoTimeFrame)
+    # cerebro.addanalyzer(bt.analyzers.TimeReturn,
+    #                     timeframe=bt.TimeFrame.NoTimeFrame,
+    #                     data=data,
+    #                     _name='timereturns')
     cerebro.run()
     cerebro.plot()

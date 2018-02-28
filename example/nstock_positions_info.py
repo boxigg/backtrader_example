@@ -61,12 +61,12 @@ class ManmStrategy(bt.Strategy):
         for each, eachdata in enumerate(self.datas):
             code = eachdata._name
             pos = self.getposition(eachdata)
-            if pos.size:  # no market / no orders
-                if self.man[each][0] < self.mam[each][0]:
-                    self.sell(data=eachdata, size=1000)
-            else:
+            if not pos.size:  # no market / no orders
                 if self.man[each][0] > self.mam[each][0]:
                     self.buy(data=eachdata, size=1000)
+            else:
+                if self.man[each][0] < self.mam[each][0]:
+                    self.sell(data=eachdata, size=1000)
 
         # positions_info
         date = str(self.datetime.datetime())

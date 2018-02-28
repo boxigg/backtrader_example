@@ -41,15 +41,11 @@ class ManmStrategy(bt.Strategy):
         self.positions_code = []
         self.man = []
         self.mam = []
-        self.buysignal = []
-        self.sellsignal = []
         for each, eachdata in enumerate(self.datas):
             man = bt.indicators.MovingAverageSimple(eachdata.close, period=self.params.n)
             mam = bt.indicators.MovingAverageSimple(eachdata.close, period=self.params.m)
             self.man.append(man)
             self.mam.append(mam)
-            self.buysignal.append(bt.indicators.CrossUp(man, mam))
-            self.sellsignal.append(bt.indicators.CrossDown(man, mam))
 
     def log(self, txt, dt=None):
         ''' Logging function for this strategy'''
@@ -63,24 +59,14 @@ class ManmStrategy(bt.Strategy):
 
         for each, eachdata in enumerate(self.datas):
             code = eachdata._name
-            pos = self.getposition(eachdata).size
+            pos = self.getposition(eachdata)
             # print(code, pos)
-            if pos:  # no market / no orders
-                # if self.man[each][0] > self.mam[each][0]:
-                if self.buysignal[each]:
-                    self.sell(data=eachdata, size=1000)
-            else:
-                # if self.man[each][0] < self.mam[each][0]:
-                if self.sellsignal[each]:
+            if not pos.size:  # no market / no orders
+                if self.man[each][0] > self.mam[each][0]:
                     self.buy(data=eachdata, size=1000)
-        # for each, code in enumerate(self.params.codes):
-        #     pos = self.getposition(self.datas[each]).size
-        #     if pos:  # no market / no orders
-        #         if self.datas[each].close[0] < self.mam[each][0]:
-        #             self.order = self.sell(data=self.datas[each], size=1000)
-        #     else:
-        #         if self.datas[each].close[0] > self.man[each][0]:
-        #             self.order = self.buy(data=self.datas[each], size=1000)
+            else:
+                if self.man[each][0] < self.mam[each][0]:
+                    self.sell(data=eachdata, size=1000)
 
     def stop(self):
         pass
@@ -89,7 +75,7 @@ class ManmStrategy(bt.Strategy):
 if __name__ == '__main__':
     codes = ['000001.SZ', '603999.SH', '600000.SH']  # or set() -> list()
     inital_cash = 1e5
-    begt = dt.datetime(2013, 1, 1)
+    begt = dt.datetime(2016, 1, 1)
     endt = dt.datetime(2018, 1, 1)
 
     cerebro = bt.Cerebro()

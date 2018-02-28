@@ -41,31 +41,25 @@ class ManmStrategy(bt.Strategy):
         self.dataclose = self.datas[0].close
         self.man = bt.indicators.MovingAverageSimple(self.dataclose, period=self.params.n)
         self.mam = bt.indicators.MovingAverageSimple(self.dataclose, period=self.params.m)
-        self.buysignal = bt.indicators.CrossUp(self.man, self.mam)
-        self.sellsignal = bt.indicators.CrossDown(self.man, self.mam)
 
     def next(self):
         if not self.position:
-            # if self.man[0] > self.mam[0]:
-            if self.buysignal:
-                cash = self.broker.getcash()
-                size_ = int(cash / self.dataclose[0] / 100) * 100
-                self.order = self.buy(size=size_)  # default buy at next day open
+            if self.man[0] > self.mam[0]:
+                self.order = self.buy()  # default buy at next day open
         else:
-            # if self.man[0] < self.mam[0]:
-            if self.sellsignal:
-                self.order = self.sell(size=self.position.size)  # clean
+            if self.man[0] < self.mam[0]:
+                self.order = self.close()  # close
 
 
 if __name__ == '__main__':
     code = '000001.SZ'
     inital_cash = 1e5
-    begt = dt.datetime(2013, 1, 1)
+    begt = dt.datetime(2015, 1, 1)
     endt = dt.datetime(2018, 1, 1)
 
     cerebro = bt.Cerebro()
     cerebro.broker.setcash(inital_cash)
-    cerebro.addsizer(bt.sizers.FixedSize, stake=100)
+    cerebro.addsizer(bt.sizers.FixedSize, stake=1000)
     cerebro.addstrategy(ManmStrategy)
     # Add Analyzer
     cerebro.addanalyzer(bt.analyzers.Returns, _name='returns')

@@ -119,9 +119,9 @@ cerebro.addstrategy(maCross, oneplot=False)
 
 #create our data list
 datalist = [
-    ('data/CAD_CHF-2005-2017-D1.csv', 'CADCHF'), #[0] = Data file, [1] = Data name
-    ('data/EUR_USD-2005-2017-D1.csv', 'EURUSD'),
-    ('data/GBP_AUD-2005-2017-D1.csv', 'GBPAUD'),
+    ('../data/CAD_CHF-2005-2017-D1.csv', 'CADCHF'), #[0] = Data file, [1] = Data name
+    ('../data/EUR_USD-2005-2017-D1.csv', 'EURUSD'),
+    ('../data/GBP_AUD-2005-2017-D1.csv', 'GBPAUD'),
 ]
 
 #Loop through the list adding to cerebro.

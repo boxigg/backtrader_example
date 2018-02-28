@@ -33,6 +33,22 @@ import backtrader as bt
 import tushare as ts
 
 
+class ManmSizer(bt.Sizer):
+    params = (('stake', 100),)
+
+    def _getsizing(self, comminfo, cash, data, isbuy):
+        pos = self.broker.getposition(data)
+        # print(cash, isbuy)
+        if isbuy:
+            if not pos.size:
+                size =  int(inital_cash / len(codes) / data.close[0] / 100) * 100
+                return size
+        else:
+            if pos.size:  # = close()
+                return pos.size
+        return self.params.stake
+
+
 class ManmStrategy(bt.Strategy):
     params = (('n', 10), ('m', 20), ('codes', []))
 
@@ -65,10 +81,12 @@ class ManmStrategy(bt.Strategy):
             # print(code, pos)
             if not pos.size:  # no market / no orders
                 if self.man[each][0] > self.mam[each][0]:
-                    self.buy(data=eachdata, size=5000)
+                    self.buy(data=eachdata)
+                    # self.buy(data=eachdata, size=5000)
             else:
                 if self.man[each][0] < self.mam[each][0]:
-                    self.sell(data=eachdata, size=5000)
+                    self.sell(data=eachdata)
+                    # self.sell(data=eachdata, size=5000)
 
     def stop(self):
         pass
@@ -82,9 +100,10 @@ if __name__ == '__main__':
     endt = dt.datetime(2018, 1, 1)
 
     cerebro = bt.Cerebro()
-    # cerebro.addsizer(bt.sizers.FixedSize, stake=1000)  # 默认买入一手
-    cerebro.broker.setcash(inital_cash)  # 初始资金
+    # cerebro.addsizer(bt.sizers.FixedSize, stake=1000)
+    cerebro.broker.setcash(inital_cash)  # inital cash
     cerebro.addstrategy(ManmStrategy, codes=codes)
+    cerebro.addsizer(ManmSizer)
     # Add Analyzer
     cerebro.addanalyzer(bt.analyzers.Returns, _name='returns')
     cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
@@ -100,7 +119,7 @@ if __name__ == '__main__':
         tohlcva = tohlcva[['open', 'high', 'low', 'close', 'volume']]
         tohlcva['openinterest'] = 0.0
         # print(tohlcva.head(10))
-        data = bt.feeds.PandasData(dataname=tohlcva, fromdate=begt, todate=endt, plot=False)
+        data = bt.feeds.PandasData(dataname=tohlcva, fromdate=begt, todate=endt)  # , plot=False)
         cerebro.adddata(data, name=code)
     # set benchmark
     tohlcva = ts.get_k_data(benchmark.split('.')[0],
